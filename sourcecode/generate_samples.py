@@ -30,15 +30,15 @@ def parse_arguments():
                         help="pretrained weights file for generator", required=True)
 
     parser.add_argument("--latent_size", action="store", type=int,
-                        default=256,
+                        default=512,
                         help="latent size for the generator")
 
     parser.add_argument("--depth", action="store", type=int,
-                        default=9,
+                        default=6,
                         help="depth of the network. **Starts from 1")
 
     parser.add_argument("--out_depth", action="store", type=int,
-                        default=6,
+                        default=7,
                         help="output depth of images. **Starts from 0")
 
     parser.add_argument("--num_samples", action="store", type=int,
@@ -94,15 +94,15 @@ def main(args):
 
     print("Creating generator object ...")
     # create the generator object
-    gen = th.nn.DataParallel(Generator(
+    gen = Generator(
         depth=args.depth,
         latent_size=args.latent_size
-    ))
+    )
 
     print("Loading the generator weights from:", args.generator_file)
     # load the weights into it
     gen.load_state_dict(
-        th.load(args.generator_file)
+        th.load(args.generator_file, map_location="cpu")
     )
 
     # path for saving the files:
@@ -119,7 +119,7 @@ def main(args):
         # resize the images:
         ss_images = [adjust_dynamic_range(ss_image) for ss_image in ss_images]
         ss_images = progressive_upscaling(ss_images)
-        ss_image = ss_images[args.out_depth]
+        ss_image = ss_images[-1]
 
         # save the ss_image in the directory
         imsave(os.path.join(save_path, str(img_num) + ".png"),
